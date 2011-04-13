@@ -70,7 +70,9 @@
     <Reference Include="DevExpress.XtraLayout.v10.2, Version=10.2.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL">
       <Private>True</Private>
     </Reference>
-    <Reference Include="DevExpress.XtraNavBar.v10.2, Version=10.2.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
+    <Reference Include="DevExpress.XtraNavBar.v10.2, Version=10.2.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
     <Reference Include="DiscUtils">
       <HintPath>.\Dlls\DiscUtils.dll</HintPath>
     </Reference>
@@ -205,6 +207,12 @@
     </Compile>
     <Compile Include="UI\Dialogs\General\FrmEnterAValue.Designer.cs">
       <DependentUpon>FrmEnterAValue.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\General\FrmLoadingYANFOE.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Dialogs\General\FrmLoadingYANFOE.Designer.cs">
+      <DependentUpon>FrmLoadingYANFOE.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\General\FrmMoveDialog.cs">
       <SubType>Form</SubType>
@@ -409,6 +417,7 @@
     <Compile Include="UI\Dialogs\TV\FrmUpdateShows.Designer.cs">
       <DependentUpon>FrmUpdateShows.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\Popups\MenuListPopup.cs" />
     <Compile Include="UI\UserControls\CommonControls\NFOPreviewUserControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -562,6 +571,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\Dialogs\General\FrmEnterAValue.resx">
       <DependentUpon>FrmEnterAValue.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\Dialogs\General\FrmLoadingYANFOE.resx">
+      <DependentUpon>FrmLoadingYANFOE.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\Dialogs\General\FrmMoveDialog.resx">
       <DependentUpon>FrmMoveDialog.cs</DependentUpon>
@@ -872,6 +884,7 @@
     </Content>
     <Content Include="Resources\refresh.png" />
     <Content Include="Resources\up.png" />
+    <None Include="Resources\yanfoe.jpg" />
     <Content Include="y.ico" />
     <Content Include="y2.ico" />
     <None Include="Resources\LoadingGlobe.gif" />
