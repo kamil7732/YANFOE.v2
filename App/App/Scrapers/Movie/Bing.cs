@@ -48,7 +48,7 @@ namespace YANFOE.Scrapers.Movie
 
                 query = query.Replace("%20", " ");
 
-                using (var service = new LiveSearchService())
+                using (var service = new BingService())
                 {
                     var searchRequest = new SearchRequest
                                             {
@@ -75,7 +75,7 @@ namespace YANFOE.Scrapers.Movie
                             {
                                 var queryResult = new QueryResult();
 
-                                if (Regex.IsMatch(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})"))
+                                if (Regex.IsMatch(result.Title, @"(?<title>.*?)\s\((?<year>\d{4}) - IMDb"))
                                 {
                                     if (Regex.IsMatch(result.Url, @"(?<imdbid>tt\d{7})"))
                                     {
@@ -85,6 +85,17 @@ namespace YANFOE.Scrapers.Movie
 
                                     queryResult.Title = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})").Groups["title"].Value;
                                     queryResult.Year = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})").Groups["year"].Value.ToInt();
+                                }
+                                else if (Regex.IsMatch(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné"))
+                                {
+                                    if (Regex.IsMatch(result.Url, @"http://www\.allocine\.fr/film/fichefilm_gen_cfilm=(?<id>.*?)\.html"))
+                                    {
+                                        queryResult.AllocineId =
+                                            Regex.Match(result.Url, @"http://www\.allocine\.fr/film/fichefilm_gen_cfilm=(?<id>.*?)\.html").Groups["id"].Value;
+                                    }
+
+                                    queryResult.Title = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné").Groups["title"].Value;
+                                    queryResult.Year = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné").Groups["year"].Value.ToInt();
                                 }
                                 else
                                 {

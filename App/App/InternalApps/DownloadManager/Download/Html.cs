@@ -82,23 +82,20 @@ namespace YANFOE.InternalApps.DownloadManager.Download
 
                 webClient.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
 
-                var outputString = webClient.DownloadString(downloadItem.Url);
-
                 var encode = Encoding.GetEncoding(1252);
-                if (downloadItem.Url.IndexOf("ofdb", StringComparison.CurrentCultureIgnoreCase) != -1 || downloadItem.Url.Contains("sratim") || downloadItem.Url.Contains("filmweb") || downloadItem.Url.Contains("allocine"))
+
+                foreach (var encoding in Settings.Get.Web.WebEncodings)
                 {
-                    encode = Encoding.GetEncoding("UTF-8");
+                    if (downloadItem.Url.Contains(encoding.Key))
+                    {
+                        encode = encoding.Value;
+                        break;
+                    }
                 }
 
-                if (downloadItem.Url.Contains("filmaffinity") || downloadItem.Url.Contains("filmdelta"))
-                {
-                    encode = Encoding.GetEncoding("ISO-8859-1");
-                }
+                webClient.Encoding = encode;
 
-                if (downloadItem.Url.Contains("kinopoisk"))
-                {
-                    encode = Encoding.GetEncoding("windows-1251");
-                }
+                var outputString = webClient.DownloadString(downloadItem.Url);
 
                 Log.WriteToLog(
                     LogSeverity.Info,
