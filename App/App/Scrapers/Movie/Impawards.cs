@@ -47,15 +47,11 @@ namespace YANFOE.Scrapers.Movie
                                 { "main", "http://http://www.impawards.com{0}" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Bing
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Poster
@@ -79,7 +75,11 @@ namespace YANFOE.Scrapers.Movie
                 query.Results = Bing.SearchBing(
                     string.Format("{0}%20{1}%20site:www.impawards.com%20poster", query.Title, query.Year),
                     string.Empty,
-                    threadID);
+                    threadID,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    ScraperList.Impawards);
 
                 return query.Results.Count > 0;
             }

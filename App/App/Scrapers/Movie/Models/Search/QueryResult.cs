@@ -35,7 +35,7 @@ namespace YANFOE.Scrapers.Movie.Models.Search
         public QueryResult()
         {
             this.Title = string.Empty;
-            this.OrigionalTitle = string.Empty;
+            this.OriginalTitle = string.Empty;
             this.Year = -1;
             this.ReleaseDate = new DateTime();
             this.AdditionalInfo = string.Empty;
@@ -47,6 +47,12 @@ namespace YANFOE.Scrapers.Movie.Models.Search
             this.TmdbID = string.Empty;
             this.YanfoeId = string.Empty;
             this.AllocineId = string.Empty;
+            this.FilmAffinityId = string.Empty;
+            this.FilmDeltaId = string.Empty;
+            this.FilmUpId = string.Empty;
+            this.FilmWebId = string.Empty;
+            this.ImpawardsId = string.Empty;
+            this.KinopoiskId = string.Empty;
         }
 
         #endregion
@@ -74,16 +80,80 @@ namespace YANFOE.Scrapers.Movie.Models.Search
         public string AllocineId { get; set; }
 
         /// <summary>
+        /// Gets or sets the film affinity id.
+        /// </summary>
+        /// <value>
+        /// The film affinity id.
+        /// </value>
+        public string FilmAffinityId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the film delta id.
+        /// </summary>
+        /// <value>
+        /// The film delta id.
+        /// </value>
+        public string FilmDeltaId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the film up id.
+        /// </summary>
+        /// <value>
+        /// The film up id.
+        /// </value>
+        public string FilmUpId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the film web id.
+        /// </summary>
+        /// <value>
+        /// The film web id.
+        /// </value>
+        public string FilmWebId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ofdb id.
+        /// </summary>
+        /// <value>
+        /// The ofdb id.
+        /// </value>
+        public string OfdbId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the sratim id.
+        /// </summary>
+        /// <value>
+        /// The sratim id.
+        /// </value>
+        public string SratimId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the impawards id.
+        /// </summary>
+        /// <value>
+        /// The impawards id.
+        /// </value>
+        public string ImpawardsId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the kinopoisk id.
+        /// </summary>
+        /// <value>
+        /// The kinopoisk id.
+        /// </value>
+        public string KinopoiskId { get; set; }
+
+        /// <summary>
         /// Gets or sets the language.
         /// </summary>
         /// <value>The movies language.</value>
         public string Language { get; set; }
 
         /// <summary>
-        /// Gets or sets the origional title.
+        /// Gets or sets the Original title.
         /// </summary>
-        /// <value>The origional title.</value>
-        public string OrigionalTitle { get; set; }
+        /// <value>The Original title.</value>
+        public string OriginalTitle { get; set; }
 
         /// <summary>
         /// Gets or sets the image URL.
@@ -141,6 +211,14 @@ namespace YANFOE.Scrapers.Movie.Models.Search
         /// </summary>
         /// <value>The movies year.</value>
         public int Year { get; set; }
+
+        /// <summary>
+        /// Gets or sets the movie meter id.
+        /// </summary>
+        /// <value>
+        /// The movie meter id.
+        /// </value>
+        public string MovieMeterId { get; set; }
 
         #endregion
     }

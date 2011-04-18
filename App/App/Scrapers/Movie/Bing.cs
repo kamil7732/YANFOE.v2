@@ -24,6 +24,7 @@ namespace YANFOE.Scrapers.Movie
     using YANFOE.InternalApps.Logs.Enums;
     using YANFOE.net.live.search.api;
     using YANFOE.Scrapers.Movie.Models.Search;
+    using YANFOE.Tools.Enums;
     using YANFOE.Tools.Extentions;
 
     /// <summary>
@@ -38,7 +39,7 @@ namespace YANFOE.Scrapers.Movie
         /// <param name="urlmatch">Only return URLs containing the following match</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
         /// <returns>First successful match.</returns>
-        public static BindingList<QueryResult> SearchBing(string query, string urlmatch, int threadID)
+        public static BindingList<QueryResult> SearchBing(string query, string urlmatch, int threadID, string regexTitle, string regexYear, string regexID, ScraperList scraperList)
         {
             var logCatagory = "Scrape > Bing Search > " + query;
 
@@ -75,27 +76,53 @@ namespace YANFOE.Scrapers.Movie
                             {
                                 var queryResult = new QueryResult();
 
-                                if (Regex.IsMatch(result.Title, @"(?<title>.*?)\s\((?<year>\d{4}) - IMDb"))
+                                if (Regex.IsMatch(result.Title, regexTitle))
                                 {
-                                    if (Regex.IsMatch(result.Url, @"(?<imdbid>tt\d{7})"))
+                                    if (Regex.IsMatch(result.Url, regexID))
                                     {
-                                        queryResult.ImdbID =
-                                            Regex.Match(result.Url, @"(?<imdbid>tt\d{7})").Groups["imdbid"].Value;
+                                        switch (scraperList)
+                                        {
+                                            case ScraperList.Imdb:
+                                                queryResult.ImdbID = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.TheMovieDB:
+                                                queryResult.TmdbID = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.Allocine:
+                                                queryResult.AllocineId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.FilmAffinity:
+                                                queryResult.FilmAffinityId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.FilmDelta:
+                                                queryResult.FilmDeltaId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.FilmUp:
+                                                queryResult.FilmUpId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.FilmWeb:
+                                                queryResult.FilmWebId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.Impawards:
+                                                queryResult.ImpawardsId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.Kinopoisk:
+                                                queryResult.KinopoiskId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.OFDB:
+                                                queryResult.OfdbId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.MovieMeter:
+                                                queryResult.MovieMeterId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                            case ScraperList.Sratim:
+                                                queryResult.SratimId = Regex.Match(result.Url, regexID).Groups["id"].Value;
+                                                break;
+                                        }
                                     }
 
-                                    queryResult.Title = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})").Groups["title"].Value;
-                                    queryResult.Year = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})").Groups["year"].Value.ToInt();
-                                }
-                                else if (Regex.IsMatch(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné"))
-                                {
-                                    if (Regex.IsMatch(result.Url, @"http://www\.allocine\.fr/film/fichefilm_gen_cfilm=(?<id>.*?)\.html"))
-                                    {
-                                        queryResult.AllocineId =
-                                            Regex.Match(result.Url, @"http://www\.allocine\.fr/film/fichefilm_gen_cfilm=(?<id>.*?)\.html").Groups["id"].Value;
-                                    }
-
-                                    queryResult.Title = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné").Groups["title"].Value;
-                                    queryResult.Year = Regex.Match(result.Title, @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné").Groups["year"].Value.ToInt();
+                                    queryResult.Title = Regex.Match(result.Title, regexTitle).Groups["title"].Value;
+                                    queryResult.Year = Regex.Match(result.Title, regexYear).Groups["year"].Value.ToInt();
                                 }
                                 else
                                 {

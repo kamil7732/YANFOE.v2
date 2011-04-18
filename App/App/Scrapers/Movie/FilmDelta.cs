@@ -49,19 +49,16 @@ namespace YANFOE.Scrapers.Movie
                                 { "main", "http://www.filmdelta.se/titles.php?movieId={0}" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                         {
-                                            ScrapeSearchMethod.Site
+                                            ScrapeSearchMethod.Site,
+                                            ScrapeSearchMethod.Bing
                                         });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
-                                                   ScrapeFields.OrigionalTitle,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
                                                    ScrapeFields.Director,
@@ -120,6 +117,37 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
+        /// Searches bing for the scraper MovieUniqueId.
+        /// </summary>
+        /// <param name="query">The query.</param>
+        /// <param name="threadID">The thread MovieUniqueId.</param>
+        /// <param name="logCatagory">The log catagory.</param>
+        /// <returns>
+        /// [true/false] if an error occurred.
+        /// </returns>
+        public new bool SearchViaBing(Query query, int threadID, string logCatagory)
+        {
+            try
+            {
+                query.Results = Bing.SearchBing(
+                    string.Format("{0} site:www.filmdelta.se/filmer/", query.Title),
+                    "http://www.filmdelta.se/filmer/",
+                    threadID,
+                    @"(?<title>.*?)\s-\sFilmdelta\s-\sFilmdatabas\spå\ssvenska",
+                    @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sFilmAffinity",
+                    @"http://www.filmdelta.se/filmer/(?<id>\d{2,9}/.*?)/",
+                    ScraperList.FilmAffinity);
+
+                return query.Results.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteToLog(LogSeverity.Error, threadID, logCatagory, ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Scrapes the Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
@@ -151,23 +179,23 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public new bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             output = string.Empty;
 
             try
             {
                 output = YRegex.Match(
-                                @"<h4>Originaltitel</h4>\s*<h5>(?<origionaltitle>.*?)</h5>",
+                                @"<h4>Originaltitel</h4>\s*<h5>(?<Originaltitle>.*?)</h5>",
                                 this.GetHtml("html", threadID, id),
-                                "origionaltitle",
+                                "Originaltitle",
                                 true);
 
                 return output.IsFilled();

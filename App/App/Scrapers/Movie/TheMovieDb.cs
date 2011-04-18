@@ -56,18 +56,12 @@ namespace YANFOE.Scrapers.Movie
                     }
                 };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Site,
                                                         ScrapeSearchMethod.Bing
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
@@ -131,7 +125,11 @@ namespace YANFOE.Scrapers.Movie
                 query.Results = Bing.SearchBing(
                     string.Format(CultureInfo.CurrentCulture, "{0} {1} site:www.themoviedb.org", query.Title, query.Year),
                     string.Empty,
-                    threadID);
+                    threadID,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    ScraperList.TheMovieDB);
 
                 return query.Results.Count > 0;
             }
@@ -716,8 +714,8 @@ namespace YANFOE.Scrapers.Movie
             {
                 if (image.Attribute("size").Value == "mid" || image.Attribute("size").Value == "poster")
                 {
-                    var origional = new Uri(image.Attribute("url").Value);
-                    var thumb = new Uri(origional.ToString().Replace("-poster", "-thumb"));
+                    var Original = new Uri(image.Attribute("url").Value);
+                    var thumb = new Uri(Original.ToString().Replace("-poster", "-thumb"));
                     var width = image.Attribute("width").Value.ToInt();
                     var height = image.Attribute("height").Value.ToInt();
 
@@ -735,7 +733,7 @@ namespace YANFOE.Scrapers.Movie
                             {
                                 Height = height, 
                                 Width = width, 
-                                UriFull = origional, 
+                                UriFull = Original, 
                                 UriThumb = thumb
                             });
                 }

@@ -17,6 +17,7 @@ namespace YANFOE.Scrapers.Movie
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Globalization;
     using System.Text;
     using System.Text.RegularExpressions;
 
@@ -49,28 +50,26 @@ namespace YANFOE.Scrapers.Movie
                                 { "main", "http://filmup.leonardo.it/sc_{0}.htm" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                 {
                                                     ScrapeSearchMethod.Bing,
                                                     ScrapeSearchMethod.Site
                                                 });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
-                                                   ScrapeFields.OrigionalTitle,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
                                                    ScrapeFields.Director,
                                                    ScrapeFields.Plot,
                                                    ScrapeFields.Genre,
                                                    ScrapeFields.Cast,
+                                                   ScrapeFields.Country,
                                                    ScrapeFields.Studio,
                                                    ScrapeFields.ReleaseDate,
+                                                   ScrapeFields.Runtime,
                                                    ScrapeFields.Poster
                                                });
 
@@ -89,10 +88,15 @@ namespace YANFOE.Scrapers.Movie
         {
             try
             {
-                query.Results = Bing.SearchBing(
-                    string.Format("{0} {1} site:filmup.leonardo.it/", query.Title, query.Year),
-                    "http://filmup.leonardo.it/sc_",
-                    threadID);
+                query.Results =
+                    Bing.SearchBing(
+                        string.Format("{0} {1} site:filmup.leonardo.it/", query.Title, query.Year),
+                        "http://filmup.leonardo.it/sc_",
+                        threadID,
+                        @"FilmUP\s-\sScheda:\s(?<title>.*?)$",
+                        @"FilmUP\s-\sScheda:\s(?<title>.*?)$",
+                        @"http://filmup\.leonardo\.it/sc_(?<id>.*?)\.htm",
+                        ScraperList.FilmUp);
 
                 return query.Results.Count > 0;
             }
@@ -173,23 +177,23 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public new bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             output = string.Empty;
 
             try
             {
                 output = YRegex.Match(
-                    @">Titolo\so.*?e:.*?=""2"">(?<origionaltitle>.*?)</f",
+                    @">Titolo\so.*?e:.*?=""2"">(?<Originaltitle>.*?)</f",
                     this.GetHtml("main", threadID, id),
-                    "title");
+                    "Originaltitle");
 
                 return output.IsFilled();
             }
@@ -217,7 +221,7 @@ namespace YANFOE.Scrapers.Movie
                 output = YRegex.Match(
                         @"Anno:.*?=""2"">(?<year>\d{4})",
                         this.GetHtml("main", threadID, id),
-                        "title")
+                        "year")
                     .ToInt();
 
                 return output.IsFilled();
@@ -289,11 +293,11 @@ namespace YANFOE.Scrapers.Movie
 
             try
             {
-                output = YRegex.MatchesToPersonList(
+                output = YRegex.MatchDelimitedToList(
                     @"Regia:.*?=""2"">(?<director>.*?)</font",
                     this.GetHtml("main", threadID, id),
-                    "title", 
-                    true);
+                    "director", 
+                    ',', true).ToPersonList();
 
                 return output.IsFilled();
             }
@@ -349,7 +353,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.MatchesToList(
-                    @"Genere:.*?=""2"">(?<genre>.*?)</font",
+                    @"Genere:.*?=""2"">(?<genre>.{3,30}?)</font",
                     this.GetHtml("main", threadID, id),
                     "genre",
                     true);
@@ -377,11 +381,15 @@ namespace YANFOE.Scrapers.Movie
 
             try
             {
-                output = YRegex.MatchesToPersonList(
+                var html = this.GetHtml("main", threadID, id);
+
+                output = YRegex.MatchDelimitedToList(
                     "Cast.*?=\"2\">(?<cast>.*?)</f",
-                    this.GetHtml("main", threadID, id),
-                    "genre",
-                    true);
+                    html,
+                    "cast",
+                    ',', 
+                    true)
+                    .ToPersonList();
 
                 return output.IsFilled();
             }
@@ -409,8 +417,37 @@ namespace YANFOE.Scrapers.Movie
                 output = YRegex.MatchesToList(
                     "Distribuzione.*?=\"2\">(?<studio>.*?)</f",
                     this.GetHtml("main", threadID, id),
-                    "genre",
+                    "studio",
                     true);
+
+                return output.IsFilled();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteToLog(LogSeverity.Error, threadID, logCatagory, ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Scrapes the Country copllection
+        /// </summary>
+        /// <param name="id">The Id for the scraper.</param>
+        /// <param name="threadID">The thread MovieUniqueId.</param>
+        /// <param name="output">The scraped Country collection.</param>
+        /// <param name="logCatagory">The log catagory.</param>
+        /// <returns>
+        /// Scrape succeeded [true/false]
+        /// </returns>
+        public new bool ScrapeCountry(string id, int threadID, out BindingList<string> output, string logCatagory)
+        {
+            output = new BindingList<string>();
+
+            try
+            {
+                output = YRegex.MatchDelimitedToList(
+                    "Nazione:(?<country>.*?)Anno", this.GetHtml("main", threadID, id), "country", ',', true);
+
 
                 return output.IsFilled();
             }
@@ -528,13 +565,37 @@ namespace YANFOE.Scrapers.Movie
 
                     if (!string.IsNullOrEmpty(posterImg))
                     {
+                        var poster = string.Format("http://filmup.leonardo.it/posters/loc/500/{0}.jpg", posterImg);
+
                         output.Add(
                             new ImageDetailsModel
                                 {
-                                    UriFull = new Uri(string.Format("http://filmup.leonardo.it/posters/loc/500/{0}.jpg", posterImg))
+                                    UriFull = new Uri(poster),
+                                    UriThumb = new Uri(poster)
                                 });
                     }
                 }
+
+                return output.IsFilled();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteToLog(LogSeverity.Error, threadID, logCatagory, ex.Message);
+                return false;
+            }
+        }
+
+        public new bool ScrapeRuntime(string id, int threadID, out int output, string logCatagory)
+        {
+            output = -1;
+
+            try
+            {
+                output = YRegex.Match(
+                        @"Durata:&nbsp;</font></td><td valign=""top""><font face=""arial, helvetica"" size=""2"">(?<runtime>\d{2,3})'",
+                        this.GetHtml("main", threadID, id),
+                        "runtime")
+                    .ToInt();
 
                 return output.IsFilled();
             }

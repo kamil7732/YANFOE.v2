@@ -50,20 +50,16 @@ namespace YANFOE.Scrapers.Movie
                                 { "cast", "http://www.kinopoisk.ru/level/19/film/{0}" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Bing,
                                                         ScrapeSearchMethod.Site
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
-                                                   ScrapeFields.OrigionalTitle,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
                                                    ScrapeFields.Director,
@@ -95,7 +91,11 @@ namespace YANFOE.Scrapers.Movie
                 query.Results = Bing.SearchBing(
                     string.Format("{0} site:www.kinopoisk.ru/level/1/", query.Title),
                     string.Empty,
-                    threadID);
+                    threadID,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    ScraperList.Kinopoisk);
 
                 return query.Results.Count > 0;
             }
@@ -137,23 +137,23 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public new bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             output = string.Empty;
 
             try
             {
                 output = YRegex.Match(
-                    @"<span\sstyle=""color:\s#666;\sfont-size:\s13px"">(?<origionaltitle>.*?)</span>",
+                    @"<span\sstyle=""color:\s#666;\sfont-size:\s13px"">(?<Originaltitle>.*?)</span>",
                     this.GetHtml("main", threadID, id),
-                    "origionaltitle");
+                    "Originaltitle");
 
                 return output.IsFilled();
             }

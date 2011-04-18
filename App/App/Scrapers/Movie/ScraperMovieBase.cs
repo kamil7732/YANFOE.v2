@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MovieScraperHandler.cs" company="The YANFOE Project">
+// <copyright file="ScraperMovieBase.cs" company="The YANFOE Project">
 //   Copyright 2011 The YANFOE Project
 // </copyright>
 // <license>
@@ -17,6 +17,7 @@ namespace YANFOE.Scrapers.Movie
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using System.Globalization;
     using System.Net;
     using System.Text;
 
@@ -36,6 +37,17 @@ namespace YANFOE.Scrapers.Movie
     /// </summary>
     public abstract class ScraperMovieBase
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScraperMovieBase"/> class.
+        /// </summary>
+        public ScraperMovieBase()
+        {
+            this.Urls = new Dictionary<string, string>();
+            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
+            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
+            this.UrlHtmlCache = new Dictionary<string, string>();
+        }
+
         /// <summary>
         /// Gets or sets the name of the scraper.
         /// </summary>
@@ -89,6 +101,46 @@ namespace YANFOE.Scrapers.Movie
         public string HtmlBaseUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the bing regex match title.
+        /// </summary>
+        /// <value>
+        /// The bing regex match title.
+        /// </value>
+        public string BingRegexMatchTitle { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bing regex match year.
+        /// </summary>
+        /// <value>
+        /// The bing regex match year.
+        /// </value>
+        public string BingRegexMatchYear { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bing regex match ID.
+        /// </summary>
+        /// <value>
+        /// The bing regex match ID.
+        /// </value>
+        public string BingRegexMatchID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bing search query.
+        /// </summary>
+        /// <value>
+        /// The bing search query.
+        /// </value>
+        public string BingSearchQuery { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bing match string.
+        /// </summary>
+        /// <value>
+        /// The bing match string.
+        /// </value>
+        public string BingMatchString { get; set; }
+
+        /// <summary>
         /// Searches bing for the scraper MovieUniqueId.
         /// </summary>
         /// <param name="query">The query.</param>
@@ -97,7 +149,31 @@ namespace YANFOE.Scrapers.Movie
         /// <returns>[true/false] if an error occurred.</returns>
         public bool SearchViaBing(Query query, int threadID, string logCatagory)
         {
-            throw new NotImplementedException();
+            query.Results = new BindingList<QueryResult>();
+
+            try
+            {
+                if (query.Year == "0")
+                {
+                    query.Year = string.Empty;
+                }
+
+                query.Results = Bing.SearchBing(
+                    string.Format(CultureInfo.CurrentCulture, BingSearchQuery, query.Title, query.Year),
+                    BingMatchString,
+                    threadID,
+                    BingRegexMatchTitle,
+                    BingRegexMatchYear,
+                    BingRegexMatchID,
+                    ScraperName);
+
+                return query.Results.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteToLog(LogSeverity.Error, threadID, logCatagory, ex.Message);
+                return false;
+            }
         }
 
         /// <summary>
@@ -139,14 +215,14 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The Id for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             throw new NotImplementedException();
         }

@@ -46,23 +46,20 @@ namespace YANFOE.Scrapers.Movie
 
             this.Urls = new Dictionary<string, string>
                             {
-                                { "main", "{0}" }
+                                { "main", "http://www.filmweb.pl/{0}" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Site
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Director,
                                                    ScrapeFields.Plot,
                                                    ScrapeFields.Country,
@@ -100,10 +97,15 @@ namespace YANFOE.Scrapers.Movie
 
                 var downloadHtml = Downloader.ProcessDownload(url, DownloadType.Html, Section.Movies).RemoveCharacterReturn();
 
+                var match = "http://www.filmweb.pl" + YRegex.Match(@"searchResultTitle\shref=""(?<url>.*?)"">", downloadHtml, "url");
+
+                var idMatch = YRegex.Match(@"http://www\.filmweb\.pl/(?<id>.*?)$", match, "id");
+
                 query.Results.Add(
                     new QueryResult
                         {
-                            URL = YRegex.Match(@"searchResultTitle""\shref=""(?<url>.*?)"">.*?</a>", downloadHtml, "url")
+                            URL = match,
+                            FilmWebId = idMatch
                         });
 
                 return true;
@@ -132,7 +134,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                    @"<title>(?<title>.*?)\s\((?<year>.*?)\)\s\s-\sFilm",
+                    @"<title>(?<title>.*?)\s/\s(?<origionaltitle>.*?)\s\((?<year>\d{4})\)",
                     this.GetHtml("main", threadID, id),
                     "title");
 
@@ -160,9 +162,37 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                        @"<title>(?<title>.*?)\s\((?<year>.*?)\)\s\s-\sFilm",
+                        @"<title>(?<title>.*?)\s/\s(?<origionaltitle>.*?)\s\((?<year>\d{4})\)",
                         this.GetHtml("main", threadID, id),
-                    "title").ToInt();
+                    "year").ToInt();
+
+                return output.IsFilled();
+            }
+            catch (Exception ex)
+            {
+                Log.WriteToLog(LogSeverity.Error, threadID, logCatagory, ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Scrapes the Original Title value
+        /// </summary>
+        /// <param name="id">The MovieUniqueId for the scraper.</param>
+        /// <param name="threadID">The thread MovieUniqueId.</param>
+        /// <param name="output">The scraped Original Title value.</param>
+        /// <param name="logCatagory">The log catagory.</param>
+        /// <returns>Scrape succeeded [true/false]</returns>
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
+        {
+            output = string.Empty;
+
+            try
+            {
+                output = YRegex.Match(
+                    @"<title>(?<title>.*?)\s/\s(?<originaltitle>.*?)\s\((?<year>\d{4})\)",
+                    this.GetHtml("main", threadID, id),
+                    "originaltitle");
 
                 return output.IsFilled();
             }
@@ -188,7 +218,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                    "class=\"value\">(?<rating>.*?)</strong>/10",
+                    @"<span\sproperty=""v:average"">(?<rating>\d,\d)</span>",
                     this.GetHtml("main", threadID, id),
                     "rating")
                 .ToDouble();
@@ -216,11 +246,12 @@ namespace YANFOE.Scrapers.Movie
 
             try
             {
-                output = YRegex.MatchesToPersonList(
-                    @"reżyseria(?<director>.*?)scenariusz",
+                output = YRegex.MatchDelimitedToList(
+                    "reżyseria:(?<director>.*?)scenariusz",
                     this.GetHtml("main", threadID, id),
-                    "rating", 
-                    true);
+                    "director", 
+                    ',', 
+                    true).ToPersonList();
 
                 return output.IsFilled();
             }
@@ -246,7 +277,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                    @"<span></span></h2>(?<plot>.*?)\.\.\.",
+                    "<span class=filmDescrBg property=\"v:summary\">(?<plot>.*?)</span>",
                     this.GetHtml("main", threadID, id),
                     "plot",
                     true);
@@ -274,9 +305,9 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.MatchesToList(
-                    @"produkcja:(?<countries>.*?)gatunek",
+                    @"<a href=""/search/film\?countryIds=\d*?"">(?<country>.*?)</a>",
                     this.GetHtml("main", threadID, id),
-                    "countries",
+                    "country",
                     true);
 
                 return output.IsFilled();
@@ -302,7 +333,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.MatchesToList(
-                    @"gatunek:.*?<a.*?>\s(?<genre>.*?)</a>",
+                    @"<a href=""/search/film\?genreIds=\d{1,2}"">(?<genre>.*?)</a",
                     this.GetHtml("main", threadID, id),
                     "genre",
                     true);
@@ -329,16 +360,9 @@ namespace YANFOE.Scrapers.Movie
             output = new BindingList<PersonModel>();
             try
             {
-                var htmlBlock = YRegex.Match(
-                    @"<th scope=""col"">Bohater</th>(?<actorblock>.*?)zobacz więcej", 
-                    this.GetHtml("main", threadID, id), 
-                    "actorblock");
-
-                htmlBlock = Regex.Replace(htmlBlock.Replace("\t", string.Empty), @"\s{2,}", " ");
-
                 output = YRegex.MatchesToPersonList(
-                    @"<img.*?rc=""(?<thumb>.*?)""\stitle="".*?""\salt=.*?>\s(?<name>.*?)</a></td>\s<td.*?>\s(?<role>.*?)\s<s.*?</tr>",
-                    htmlBlock,
+                    @"<img width=38 height=50 src=""(?<thumb>.{30,50})"" alt="".*?""></span>\s(?<name>.*?)\s</a></h3><div>\s(?<role>.*?)\s</div>",
+                    this.GetHtml("main", threadID, id),
                     "name",
                     "role",
                     "thumb");
@@ -366,9 +390,9 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                        @"top\sświat:\s(?<top250>\d*)",
+                        @"<span class=worldRanking>(?<top250>\d{1,3}).",
                         this.GetHtml("main", threadID, id),
-                        "genre")
+                        "top250")
                     .ToInt();
 
                 return output.IsFilled();
@@ -394,7 +418,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.MatchesToList(
-                        @"dystrybucja:</abbr>\t*\s\s(?<studio>.*?)\t",
+                        "dystrybucja:</dt><dd> (?<studio>.*?) </dd>",
                         this.GetHtml("main", threadID, id),
                         "studio");
 
@@ -478,7 +502,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.Match(
-                        @"trwania:\s(?<runtime>.*?)\t",
+                        @"<div\sclass=time>(?<runtime>.*?)<span>",
                         this.GetHtml("main", threadID, id),
                         "runtime")
                     .ToInt();
@@ -506,9 +530,9 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 output = YRegex.MatchesToPersonList(
-                    @"reżyseria(?<director>.*?)scenariusz",
+                    @"reżyseria:(?<writer>.*?)scenariusz",
                     this.GetHtml("main", threadID, id),
-                    "runtime", 
+                    "writer", 
                     true);
 
                 return output.IsFilled();
@@ -533,12 +557,14 @@ namespace YANFOE.Scrapers.Movie
             output = new BindingList<ImageDetailsModel>();
             try
             {
-                var poster = YRegex.Match(
-                    @"<a\srel=""artshow""\shref=""(?<poster>.*?)"">",
+                var posterSmall = YRegex.Match(
+                    @"<div\sclass=posterLightbox><a\srel=""v:image""\shref=""(?<poster>.*?)""\sclass=film_mini>",
                     this.GetHtml("main", threadID, id),
                     "poster");
 
-                output.Add(new ImageDetailsModel { UriFull = new Uri(poster) });
+                var posterBig = posterSmall.Replace(".2.jpg", ".3.jpg");
+
+                output.Add(new ImageDetailsModel { UriFull = new Uri(posterBig), UriThumb = new Uri(posterSmall) });
 
                 return output.IsFilled();
             }

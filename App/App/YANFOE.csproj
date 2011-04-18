@@ -14,6 +14,21 @@
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -113,6 +128,7 @@
     <Compile Include="Factories\Scraper\MovieScraperGroupFactory.cs" />
     <Compile Include="Factories\Sets\MovieSetManager.cs" />
     <Compile Include="InternalApps\DownloadManager\Download\AppleBinary.cs" />
+    <Compile Include="InternalApps\DownloadManager\Download\InternalHandlers.cs" />
     <Compile Include="InternalApps\DownloadManager\Model\BackgroundQueObject.cs" />
     <Compile Include="IO\GenerateOutput.cs" />
     <Compile Include="IO\IoInterface.cs" />
@@ -136,6 +152,8 @@
     <Compile Include="Models\TvModels\SeriesListModel.cs" />
     <Compile Include="Scrapers\Movie\Apple.cs" />
     <Compile Include="Scrapers\Movie\Models\ScraperGroup\MovieScraperGroupModel.cs" />
+    <Compile Include="Scrapers\Movie\MovieMeter.cs" />
+    <Compile Include="Scrapers\Movie\Ofdb.cs" />
     <Compile Include="Scrapers\Movie\TheMovieDb.cs" />
     <Compile Include="Settings\UserSettings\Countries.cs" />
     <Compile Include="Settings\UserSettings\Genres.cs" />
@@ -148,10 +166,10 @@
     <Compile Include="Tools\Models\TrailerDetailsModel.cs" />
     <Compile Include="Tools\IO\Delete.cs" />
     <Compile Include="Tools\Restructure\FileSystemCharChange.cs" />
-    <Compile Include="Tools\ThirdParty\FastDirectoryEnumerator.cs" />
     <Compile Include="Tools\IO\FileNaming.cs" />
     <Compile Include="Tools\Text\IO.cs" />
     <Compile Include="Tools\ThirdParty\FileLookup.cs" />
+    <Compile Include="Tools\ThirdParty\MovieMeterApiHandler.cs" />
     <Compile Include="Tools\UI\Skin.cs" />
     <Compile Include="UI\Dialogs\DSettings\UcSettingsGeneralUi.cs">
       <SubType>UserControl</SubType>
@@ -690,6 +708,13 @@
       <DependentUpon>TvUserControl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.config" />
+    <None Include="Movie\ScraperGroups\Dutch.gz" />
+    <None Include="Movie\ScraperGroups\English.gz" />
+    <None Include="Movie\ScraperGroups\French.gz" />
+    <None Include="Movie\ScraperGroups\German.gz" />
+    <None Include="Movie\ScraperGroups\Italian.gz" />
+    <None Include="Movie\ScraperGroups\Spanish.gz" />
+    <None Include="Movie\ScraperGroups\Swedish.gz" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -884,9 +909,6 @@
     <Content Include="Licences\.NET-DiscUtils.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Movie\ScraperGroups\English.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Resources\refresh.png" />
     <Content Include="Resources\up.png" />
     <None Include="Resources\yanfoe.jpg" />
@@ -935,6 +957,28 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

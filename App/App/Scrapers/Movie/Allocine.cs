@@ -52,21 +52,15 @@ namespace YANFOE.Scrapers.Movie
                                 { "poster", "http://www.allocine.fr/film/fichefilm-{0}/affiches/" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
-
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Bing,
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>();
-
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
-                                                   ScrapeFields.OrigionalTitle,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
                                                    ScrapeFields.Director,
@@ -76,10 +70,18 @@ namespace YANFOE.Scrapers.Movie
                                                    ScrapeFields.Cast,
                                                    ScrapeFields.ReleaseDate,
                                                    ScrapeFields.Runtime,
+                                                   ScrapeFields.Poster
                                                });
 
             this.HtmlEncoding = Encoding.UTF8;
             this.HtmlBaseUrl = "allocine";
+
+            this.BingMatchString = "http://www.imdb.com/title/";
+            this.BingSearchQuery = "{0} {1} site:www.imdb.com";
+            this.BingRegexMatchTitle = @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné";
+            this.BingRegexMatchYear = @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sAlloCiné";
+            this.BingRegexMatchID = @"http://www\.allocine\.fr/film/fichefilm_gen_cfilm=(?<id>.*?)\.html";
+
         }
 
         /// <summary>
@@ -96,7 +98,11 @@ namespace YANFOE.Scrapers.Movie
                 query.Results = Bing.SearchBing(
                     string.Format(CultureInfo.CurrentCulture, "site:http://www.allocine.fr {0}%20{1}", query.Title, query.Year),
                     "http://www.allocine.fr/film/fichefilm_gen_cfilm=",
-                    threadID);
+                    threadID,
+                    BingRegexMatchTitle,
+                    BingRegexMatchYear,
+                    BingRegexMatchID,
+                    this.ScraperName);
 
                 return query.Results.Count > 0;
             }
@@ -139,23 +145,23 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public new bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             output = string.Empty;
 
             try
             {
                 output = YRegex.Match(
-                    @"Titre\soriginal\s:\s<span\sclass=""purehtml""><em>(?<OrigionalTitle>.+?)</em></span>",
+                    @"Titre\soriginal\s:\s<span\sclass=""purehtml""><em>(?<OriginalTitle>.+?)</em></span>",
                     this.GetHtml("main", threadID, id),
-                    "OrigionalTitle",
+                    "OriginalTitle",
                     true);
 
                 return !string.IsNullOrEmpty(output);
@@ -219,30 +225,18 @@ namespace YANFOE.Scrapers.Movie
             {
                 var ratingMatch = Regex.Matches(
                     this.GetHtml("main", threadID, id),
-                    @"</a><span\sclass=""moreinfo"">\x28(?<rating>.*?)\x29</span>",
+                    @"<span class=""moreinfo"">\((?<rating1>\d),(?<rating2>\d)\)</span></p></div><div class=""notezone",
                     RegexOptions.IgnoreCase);
 
-                var rating = "0.0";
+                output = 0.0;
 
-                if (ratingMatch.Count > 1)
+                if (ratingMatch.Count > 0)
                 {
-                    if (ratingMatch[1].Success)
-                    {
-                        rating = ratingMatch[1].Groups["rating"].Value;
-                    }
-                }
-                else
-                {
-                    if (ratingMatch.Count > 0)
-                    {
-                        if (ratingMatch[0].Success)
-                        {
-                            rating = ratingMatch[0].Groups["rating"].Value;
-                        }
-                    }
-                }
+                    double.TryParse(
+                        ratingMatch[0].Groups["rating1"].Value + "." + ratingMatch[0].Groups["rating2"].Value, out output);
 
-                output = !string.IsNullOrEmpty(rating) ? Maths.ProcessDouble(rating, 2.5).ToDouble() : 0;
+                    output = output + output;
+                }
 
                 return true;
             }
@@ -332,7 +326,7 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 var country = YRegex.Match(
-                    @"<a\shref=""/film/tous/pays-\d{4}/"">(?<country>.*?)</a>",
+                    @"Long-métrage<a\sclass=""underline""\shref="".*?"">(?<country>.*?)</a><span>",
                     this.GetHtml("main", threadID, id),
                     "country",
                     true);
@@ -400,19 +394,12 @@ namespace YANFOE.Scrapers.Movie
 
                 var m = Regex.Matches(
                     castBlock,
-                    @"/personne/fichepersonne_gen_cpersonne=\d*\.html"">\t\t\t*?<img src='(?<image>.*?)'.*?title='(?<actor>.*?)'.*?Rôle : (?<role>.*?)\t",
+                    "\">(?<actor>.{0,25})</a></h3></div><p>Rôle : (?<role>.*?)</p>",
                     RegexOptions.IgnoreCase);
-
-                const string EmptyImage = "http://images.allocine.fr/r_60_80/commons/emptymedia/AffichetteAllocine.gif";
 
                 foreach (Match match in m)
                 {
-                    var actor = new PersonModel(match.Groups["actor"].Value, match.Groups["role"].Value);
-
-                    if (match.Groups["image"].Value != EmptyImage)
-                    {
-                        actor.ImageUrl = match.Groups["image"].Value;
-                    }
+                    var actor = new PersonModel(match.Groups["actor"].Value, role: match.Groups["role"].Value);
 
                     output.Add(actor);
                 }
@@ -494,14 +481,14 @@ namespace YANFOE.Scrapers.Movie
 
                 var result1 = int.TryParse(
                         YRegex.Match(
-                            @"Durée\s:\s\s(?<hour>\d{2})h(?<minute>\d{2})min",
+                            @"Durée\s:\s(?<hour>\d{2})h(?<minute>\d{2})min",
                             this.GetHtml("main", threadID, id),
                             "hour"),
                         out hour);
 
                 var result2 = int.TryParse(
                         YRegex.Match(
-                            @"Durée\s:\s\s(?<hour>\d{2})h(?<minute>\d{2})min",
+                            @"Durée\s:\s(?<hour>\d{2})h(?<minute>\d{2})min",
                             this.GetHtml("main", threadID, id),
                             "minute"),
                         out minute);
@@ -551,12 +538,13 @@ namespace YANFOE.Scrapers.Movie
 
                     var regexImageUrl = Regex.Match(
                         imageWebPage,
-                        @"<img\ssrc=""(?<imageurl>http://images.allocine.fr/r_760_x.*.jpg?)",
+                        @"<img\ssrc=""(?<imageurl>http://images.allocine.fr/r_760_x.*?.jpg?)",
                         RegexOptions.IgnoreCase);
 
                     if (regexImageUrl.Success)
                     {
-                        output.Add(new ImageDetailsModel { UriFull = new Uri(regexImageUrl.Groups["imageurl"].Value) });
+                        var thumb = regexImageUrl.Groups["imageurl"].Value.Replace("r_760_x", "c_80_120");
+                        output.Add(new ImageDetailsModel { UriFull = new Uri(regexImageUrl.Groups["imageurl"].Value), UriThumb = new Uri(thumb) });
                     }
                 }
 

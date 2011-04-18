@@ -19,6 +19,7 @@ namespace YANFOE.InternalApps.DownloadManager.Download
     using System.IO;
     using System.Net;
     using System.Text;
+    using System.Text.RegularExpressions;
 
     using BitFactory.Logging;
 
@@ -65,6 +66,12 @@ namespace YANFOE.InternalApps.DownloadManager.Download
                 }
             }
 
+            if (InternalHandlers.Check(downloadItem))
+            {
+                InternalHandlers.Process(downloadItem, cachePath);
+                return;
+            }
+
             try
             {
                 Log.WriteToLog(
@@ -80,7 +87,7 @@ namespace YANFOE.InternalApps.DownloadManager.Download
                         Proxy = null
                     };
 
-                webClient.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
+                webClient.Headers.Add("user-agent", Settings.Get.Web.UserAgent);
 
                 var encode = Encoding.GetEncoding(1252);
 
@@ -103,6 +110,14 @@ namespace YANFOE.InternalApps.DownloadManager.Download
                     string.Format(CultureInfo.CurrentCulture, "Download Complete. Saving to Cache"),
                     string.Format(CultureInfo.CurrentCulture, "{0}", downloadItem.Url));
 
+                if (encode != Encoding.UTF8)
+                {
+                    var origBytes = encode.GetBytes(outputString);
+                    var newBytes = Encoding.Convert(encode, Encoding.UTF8, origBytes);
+                    outputString = Encoding.UTF8.GetString(newBytes);
+                    encode = Encoding.UTF8;
+                }
+
                 File.WriteAllText(cachePath + ".txt.tmp", outputString, encode);
 
                 Gzip.Compress(cachePath + ".txt.tmp", cachePath + ".txt.gz");
@@ -113,6 +128,7 @@ namespace YANFOE.InternalApps.DownloadManager.Download
                     downloadItem.ThreadID,
                     string.Format(CultureInfo.CurrentCulture, "Process Complete."),
                     string.Format(CultureInfo.CurrentCulture, "{0}", downloadItem.Url));
+
 
                 downloadItem.Result.Result = outputString;
                 downloadItem.Result.Success = true;

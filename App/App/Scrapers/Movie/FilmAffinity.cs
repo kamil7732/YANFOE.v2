@@ -49,20 +49,16 @@ namespace YANFOE.Scrapers.Movie
                                 { "main", "http://www.filmaffinity.com/es/film{0}.html" }
                             };
 
-            this.UrlHtmlCache = new Dictionary<string, string>();
-
-            this.AvailableSearchMethod = new BindingList<ScrapeSearchMethod>();
             this.AvailableSearchMethod.AddRange(new[]
                                                     {
                                                         ScrapeSearchMethod.Bing,
                                                         ScrapeSearchMethod.Site
                                                     });
 
-            this.AvailableScrapeMethods = new BindingList<ScrapeFields>(); 
             this.AvailableScrapeMethods.AddRange(new[]
                                                {
                                                    ScrapeFields.Title,
-                                                   ScrapeFields.OrigionalTitle,
+                                                   ScrapeFields.OriginalTitle,
                                                    ScrapeFields.Year,
                                                    ScrapeFields.Rating,
                                                    ScrapeFields.Director,
@@ -92,9 +88,13 @@ namespace YANFOE.Scrapers.Movie
             try
             {
                 query.Results = Bing.SearchBing(
-                    string.Format("{0} site:http://www.filmaffinity.com/es", query.Title), 
-                    string.Empty, 
-                    threadID);
+                    string.Format("{0} {1} site:http://www.filmaffinity.com/es", query.Title, query.Year),
+                    "http://www.filmaffinity.com/es/film",
+                    threadID,
+                    @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sFilmAffinity",
+                    @"(?<title>.*?)\s\((?<year>\d{4})\)\s-\sFilmAffinity",
+                    @"http://www\.filmaffinity\.com/es/film(?<id>\d{6,9})\.html",
+                    ScraperList.FilmAffinity);
 
                 return query.Results.Count > 0;
             }
@@ -176,23 +176,23 @@ namespace YANFOE.Scrapers.Movie
         }
 
         /// <summary>
-        /// Scrapes the Origional Title value
+        /// Scrapes the Original Title value
         /// </summary>
         /// <param name="id">The MovieUniqueId for the scraper.</param>
         /// <param name="threadID">The thread MovieUniqueId.</param>
-        /// <param name="output">The scraped Origional Title value.</param>
+        /// <param name="output">The scraped Original Title value.</param>
         /// <param name="logCatagory">The log catagory.</param>
         /// <returns>Scrape succeeded [true/false]</returns>
-        public new bool ScrapeOrigionalTitle(string id, int threadID, out string output, string logCatagory)
+        public new bool ScrapeOriginalTitle(string id, int threadID, out string output, string logCatagory)
         {
             output = string.Empty;
 
             try
             {
                 output = YRegex.Match(
-                    @"<td ><b>(?<origionaltitle>.*?)</b></td>",
+                    @"<td ><b>(?<Originaltitle>.*?)</b></td>",
                     this.GetHtml("main", threadID, id),
-                    "origionaltitle");
+                    "Originaltitle");
 
                 return output != string.Empty;
             }
@@ -359,12 +359,12 @@ namespace YANFOE.Scrapers.Movie
 
             try
             {
-                output = YRegex.MatchDelimitedToList(
-                    @"GÉNERO(?<genre>.*?)</tr>",
-                    this.GetHtml("main", threadID, id),
-                    "main",
-                    ',',
-                    true);
+                var html = this.GetHtml("main", threadID, id);
+
+                output =
+                    YRegex.MatchesToList(
+                        "genre=.*?&attr=rat_count\" style=\"text-decoration:none\">(?<genre>.*?)</a>", html, "genre");
+
 
                 return output.IsFilled();
             }
@@ -513,7 +513,9 @@ namespace YANFOE.Scrapers.Movie
                     this.GetHtml("main", threadID, id),
                     "poster");
 
-                output.Add(new ImageDetailsModel { UriFull = new Uri(posterURL) });
+                var posterURLSmall = posterURL.Replace("large.jpg", "small.jpg");
+
+                output.Add(new ImageDetailsModel { UriFull = new Uri(posterURL), UriThumb = new Uri(posterURLSmall) });
 
                 return output.IsFilled();
             }
